@@ -34,6 +34,7 @@ module ace
 	output       vblank,
 	output reg   mic,
 	output reg   spk,
+	input        ear,
 
 	input        loader_en,
 	input [15:0] loader_addr,
@@ -63,7 +64,7 @@ always @(posedge clk) begin
 	end
 end
 
-wire [7:0] io_dout = {8{iorq_n|rd_n}} | (~cpu_addr[0] ? {3'b110, kbd_col} : (sram_data | cram_data));
+wire [7:0] io_dout = {8{iorq_n|rd_n}} | (~cpu_addr[0] ? {2'b11,ear, kbd_col} : (sram_data | cram_data));
 
 wire [9:0] sram_addr;
 wire [7:0] sram_data;

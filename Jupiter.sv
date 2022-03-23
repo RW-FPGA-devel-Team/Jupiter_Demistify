@@ -148,6 +148,7 @@ assign LED = !ioctl_wait;
 wire reset = !pll_ready | status[0] | buttons[1];
 
 wire mic,spk;
+wire ear = ~TAPE_IN;
 
 wire [7:0] kbd_row;
 wire [4:0] kbd_col;
