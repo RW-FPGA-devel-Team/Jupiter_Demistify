@@ -1,5 +1,4 @@
 //
-// c16_mist.sv - C16 for the MiST
 //
 // https://github.com/mist-devel
 // 
@@ -19,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 //
 
-module sidi_top (
+module mist_top (
    input  	 CLOCK_27,
 
 	// LED outputs

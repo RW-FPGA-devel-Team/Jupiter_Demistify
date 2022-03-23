@@ -53,7 +53,7 @@ wire sram_enable = (~mreq_n | loader_en) && (addr[15:11] == 'b00100); // 2000 - 
 wire cram_enable = (~mreq_n | loader_en) && (addr[15:11] == 'b00101); // 2800 - 2FFF 1KB * 2
 wire uram_enable = (~mreq_n | loader_en) && (addr[15:12] == 'b0011);  // 3000 - 3FFF 1KB * 4
 wire xram_enable = (~mreq_n | loader_en) && (addr[15:14] == 'b01);    // 4000 - 7FFF 16KB
-wire eram_enable = (~mreq_n | loader_en) && (addr[15]);               // 8000 - FFFF 32KB
+//wire eram_enable = (~mreq_n | loader_en) && (addr[15]);               // 8000 - FFFF 32KB
 
 wire wait_n = no_wait | ~(sram_enable | cram_enable) | hblank | vblank | ~addr[10]; // 2400 - 27FF, 2C00 - 2FFF
 
@@ -115,16 +115,16 @@ dpram #(14) xram
 	.q_a(xram_dout)
 );
 
-wire [7:0] eram_dout;
-dpram #(15) eram
-(
-	.clock(clk),
-	.address_a(addr[14:0]),
-	.data_a(data),
-	.wren_a(ram_we & eram_enable),
-	.oe_a_n(~eram_enable),
-	.q_a(eram_dout)
-);
+//wire [7:0] eram_dout;
+//dpram #(15) eram
+//(
+//	.clock(clk),
+//	.address_a(addr[14:0]),
+//	.data_a(data),
+//	.wren_a(ram_we & eram_enable),
+//	.oe_a_n(~eram_enable),
+//	.q_a(eram_dout)
+//);
 
 wire [7:0] rom_dout;
 dpram #(.ADDRWIDTH(13), .MEM_INIT_FILE("../rtl/ace.mif")) rom
@@ -141,7 +141,6 @@ wire        iorq_n, mreq_n, rd_n, wr_n, int_n;
 T80pa cpu
 (
 	.RESET_n(~(reset | loader_reset)),
-	//.RESET_n(~(reset)),
 	.CLK(clk),
 	.CEN_p(ce_cpu),
 
@@ -152,8 +151,8 @@ T80pa cpu
 	.RD_n(rd_n),
 	.WR_n(wr_n),
 	.A(cpu_addr),
-	.DI(rom_dout & sram_dout & uram_dout & xram_dout & eram_dout & io_dout),
-	//.DI(rom_dout & sram_dout & uram_dout & xram_dout & io_dout),
+	//.DI(rom_dout & sram_dout & uram_dout & xram_dout & eram_dout & io_dout),
+	.DI(rom_dout & sram_dout & uram_dout & xram_dout & io_dout),
 	.DO(cpu_dout),
 	.DIRSet(|regset),
 	.DIR(REG)
