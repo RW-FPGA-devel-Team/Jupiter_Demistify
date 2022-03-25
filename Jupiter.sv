@@ -57,7 +57,6 @@ module guest_mist
 `include "build_id.v"
 parameter CONF_STR = {
 	"Jupiter;;",
-	"F,DCE,Load snapshot;",
 	"O23,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
 	"O45,CPU Speed,Normal,x2,x4;",
 	"T0,Reset;",
@@ -81,6 +80,17 @@ always @(negedge clk_sys) begin
 	div <= div + 1'd1;
 	ce_pix <= !div[2:0];
 	ce_cpu <= (!div[3:0] && !turbo) | (!div[2:0] && turbo[0]) | turbo[1];
+end
+
+
+reg rom_ready=0;
+reg [23:0] counter;
+always @ (posedge ce_cpu) begin
+  if (!reset && counter == 24'b1) begin
+    rom_ready = 1'b1;
+  end else begin
+    counter <= counter +1;    
+  end 
 end
 
 /////////////////  HPS  ///////////////////////////
@@ -159,19 +169,20 @@ ace ace
 	.*,
 	.clk(clk_sys),
 	.no_wait(|turbo),
-	.reset(reset|loader_reset)
+	.rom_ready (rom_ready),
+	.reset(reset)
 );
 
 keyboard keyboard (.*);
 
 
-assign DAC_L = {1'b0, spk, mic, 13'd0};
+assign DAC_L = {1'b0, spk, mic,ear, 12'd0};
 assign DAC_R = DAC_L;
 
 wire hsync, vsync, hblank, vblank;
 wire 			blankn = ~(hblank | vblank);
-
-video_mixer #(.LINE_LENGTH(280), .HALF_DEPTH(1)) video_mixer
+wire [1:0] R,G,B;
+video_mixer #(.LINE_LENGTH(280), .HALF_DEPTH(0)) video_mixer
 (
 	.clk_sys(clk_sys),
 	.ce_pix(ce_pix),
@@ -184,9 +195,9 @@ video_mixer #(.LINE_LENGTH(280), .HALF_DEPTH(1)) video_mixer
 	.hq2x(status[3:2]==1),
 	.ypbpr(ypbpr),
 	.ypbpr_full(1),
-	.R(blankn ? {video_out,video_out,video_out} : "000"),
-	.G(blankn ? {video_out,video_out,video_out} : "000"),
-	.B(blankn ? {video_out,video_out,video_out} : "000"),
+	.R(blankn ? { R[0],R[0],{4{R[0] & R[1]}}} : 6'b0),
+	.G(blankn ? { G[0],G[0],{4{G[0] & G[1]}}} : 6'b0),
+	.B(blankn ? { B[0],B[0],{4{B[0] & B[1]}}} : 6'b0),
 	.mono(0),
 	.HSync(~hsync),
 	.VSync(~vsync),
@@ -205,12 +216,6 @@ dac #(16) dac_l (
    .dac_o        (AUDIO_L)
 );
 assign AUDIO_R=AUDIO_L;
-
-wire [15:0] loader_addr  = ioctl_addr +'h2000;
-wire  [7:0] loader_data  = ioctl_dout;
-wire        loader_wr    = ioctl_wr;
-wire        loader_en    = ioctl_download;
-wire        loader_reset = ioctl_download;
 
 
 endmodule

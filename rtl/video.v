@@ -26,6 +26,12 @@ module video
 	input   [7:0] sram_data,
 	output  [9:0] cram_addr,
 	input   [7:0] cram_data,
+	output  [13:0] attr_addr,
+	input   [7:0] attr_data,
+	
+	output  [1:0] R,
+	output  [1:0] G,
+	output  [1:0] B,
 
 	output        video_out,
 	output reg    hsync,
@@ -35,6 +41,12 @@ module video
 );
 
 assign sram_addr = {vcnt[7:3], hcnt[7:3]};
+assign attr_addr = sram_addr;
+
+assign G = pixel ? {attr_data[2] ? attr_data[6]: 1'b0,attr_data[2]} : {attr_data[5] ? attr_data[6]: 1'b0,attr_data[5]}; 
+assign R = pixel ? {attr_data[1] ? attr_data[6]: 1'b0,attr_data[1]} : {attr_data[4] ? attr_data[6]: 1'b0,attr_data[4]}; 
+assign B = pixel ? {attr_data[0] ? attr_data[6]: 1'b0,attr_data[0]} : {attr_data[3] ? attr_data[6]: 1'b0,attr_data[3]}; 
+
 assign cram_addr = {sram_data[6:0], vcnt[2:0]};
 assign video_out = pix[7] ^ inv;
 
@@ -42,6 +54,8 @@ reg [8:0] hcnt;
 reg [8:0] vcnt;
 reg [7:0] pix;
 reg       inv;
+wire      pixel = video_out;
+
 always @(posedge clk) begin
 	reg ven,hen;
 
@@ -68,7 +82,7 @@ always @(posedge clk) begin
 
 		hblank <= ~hen;
 		vblank <= ~ven;
-
+		
 		pix <= {pix[6:0], 1'b0};
 		if (!hcnt[2:0] && ven && hen) pix <= cram_data;
 		if (!hcnt[2:0]) inv <= ven & hen & sram_data[7];
